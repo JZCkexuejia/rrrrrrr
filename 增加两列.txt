@@ -1,0 +1,46 @@
+ LoadDataGridView()
+        Dim Max As String = txtColumnAll.Text.ToUpper() & "_MAX"
+        Dim Min As String = txtColumnAll.Text.ToUpper() & "_MIN"
+
+        Dim colIndexMax As Integer = DataGridView1.Columns.IndexOf(DataGridView1.Columns(Max))
+        Dim colIndexMin As Integer = DataGridView1.Columns.IndexOf(DataGridView1.Columns(Min))
+        If (colIndexMax <> -1) Then
+            MessageBox.Show("Error: " & Max & "已存在")
+            Return
+        End If
+        If (colIndexMin <> -1) Then
+            MessageBox.Show("Error: " & Min & "已存在")
+            Return
+        End If
+
+
+        Dim result As DialogResult = MessageBox.Show("你确定要输入 " & Min & "列和 " & Max & "列吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+        ' 根据用户的响应执行操作  
+        If result = DialogResult.No Then
+            Return
+        End If
+
+
+        Dim sb As New StringBuilder()
+        sb.Append("IF not  EXISTS (  ")
+        sb.AppendFormat("SELECT 1  FROM INFORMATION_SCHEMA.COLUMNS  WHERE TABLE_NAME = 'TestVB' AND (COLUMN_NAME = '{0}'  or COLUMN_NAME = '{1}') )  ", Min, Max)
+        sb.AppendFormat("BEGIN  ALTER TABLE TestVB  ADD {0} float null;ALTER TABLE TestVB  ADD {1} float null; END ", Min, Max)
+        Dim insert As String = sb.ToString()
+        ' 创建一个新的SqlConnection对象
+        Using connection As New SqlConnection(connectionString)
+            Try
+                ' 打开连接
+                connection.Open()
+                ' 创建一个SqlCommand对象
+                Dim insertCommand As New SqlCommand(insert, connection)
+
+                ' 执行命令  
+                insertCommand.ExecuteNonQuery()
+
+            Catch ex As Exception
+                ' 异常处理
+                MessageBox.Show("Error: " & ex.Message)
+            End Try
+        End Using ' SqlConnection
+        LoadDataGridView()
